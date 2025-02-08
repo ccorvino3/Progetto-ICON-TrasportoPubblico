@@ -1,0 +1,140 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="http://example.org/onto.owl"
+         xmlns="http://example.org/onto.owl#">
+
+  <owl:Ontology rdf:about="http://example.org/onto.owl"/>
+
+  <!-- Classi -->
+  <owl:Class rdf:about="#Stazione">
+    <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+  </owl:Class>
+
+  <owl:Class rdf:about="#Treno">
+    <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+  </owl:Class>
+
+  <owl:Class rdf:about="#Ritardo">
+    <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+  </owl:Class>
+
+  <!-- Proprietà -->
+  <owl:ObjectProperty rdf:about="#haPartenza">
+    <rdfs:range rdf:resource="#Stazione"/>
+    <rdfs:domain rdf:resource="#Treno"/>
+  </owl:ObjectProperty>
+
+  <owl:ObjectProperty rdf:about="#haArrivo">
+    <rdfs:range rdf:resource="#Stazione"/>
+    <rdfs:domain rdf:resource="#Treno"/>
+  </owl:ObjectProperty>
+
+  <owl:ObjectProperty rdf:about="#haRitardo">
+    <rdfs:range rdf:resource="#Ritardo"/>
+    <rdfs:domain rdf:resource="#Treno"/>
+  </owl:ObjectProperty>
+
+  <owl:DatatypeProperty rdf:about="#tempoViaggioMedio">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#numeroCircolazioniPreviste">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#numeroTreniCancellati">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#numeroTreniRitardoPartenza">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#ritardoMedioTreniPartenza">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#ritardoMedioTotaleTreniPartenza">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#numeroTreniRitardoArrivo">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#ritardoMedioTreniArrivo">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#ritardoMedioTotaleTreniArrivo">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#percentualeRitardiCausaEsterno">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#percentualeRitardiCausaInfrastruttura">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#percentualeRitardiCausaGestioneTraffico">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#percentualeRitardiCausaMaterialeRotabile">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#percentualeRitardiCausaGestioneStazione">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#percentualeRitardiCausaPasseggeri">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#numeroTreniRitardo15Minuti">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#ritardoMedioTreni15Minuti">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#numeroTreniRitardo30Minuti">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#numeroTreniRitardo60Minuti">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </owl:DatatypeProperty>
+
+  <owl:DatatypeProperty rdf:about="#periodo">
+    <rdfs:domain rdf:resource="#Treno"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  </owl:DatatypeProperty>
+
+</rdf:RDF>
