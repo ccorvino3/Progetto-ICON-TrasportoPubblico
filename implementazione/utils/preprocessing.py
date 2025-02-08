@@ -1,4 +1,3 @@
-import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 from sklearn.impute import SimpleImputer
 

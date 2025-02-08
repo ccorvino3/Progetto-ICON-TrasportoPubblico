@@ -1,4 +1,3 @@
-# main.py
 from utils.dataset import load_dataset
 from utils.preprocessing import preprocess_data
 from supervised_learning.prediction import predict

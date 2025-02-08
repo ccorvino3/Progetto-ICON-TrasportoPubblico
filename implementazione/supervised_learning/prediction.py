@@ -1,7 +1,5 @@
-# demand_prediction.py
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.discriminant_analysis import StandardScaler
 import seaborn as sns
 from sklearn.model_selection import cross_val_score, train_test_split, GridSearchCV
 from sklearn.linear_model import LinearRegression
