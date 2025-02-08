@@ -12,7 +12,7 @@ def predict(dataset, target_column, period_column='Period'):
     X_train, X_test, y_train, y_test = split_data(dataset, target_column)
     print("1. Dati suddivisi in set di training e di test.")
     
-    # Prendere la colonna 'Period' dal dataset e la droppo dal dataset di training e di test di X e y
+    # Prendo 'Period' per il grafico
     period_column_values = X_test[period_column]
     X_test = X_test.drop(columns=[period_column])
     X_train = X_train.drop(columns=[period_column])
