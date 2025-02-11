@@ -92,14 +92,13 @@ def print_column_not_null(df):
         print(f"Errore nel caricamento del dataset: {e}")
 
 """
-    Calcola la percentuale di valori non nulli per ogni colonna del dataset
-    e salva i risultati in un file CSV e in un file Markdown.
+    Calcola la percentuale di valori non nulli e non zero per ogni colonna di un dataset
+    e salva i risultati in un file Markdown.
 
     :param file_path: Percorso del file CSV.
-    :param output_csv: Percorso del file CSV di output (default 'output_percentage.csv').
     :param output_md: Percorso del file Markdown di output (default 'output_percentage.md').
 """
-def save_columns_not_null_to_md(df, output_md='progettazione/dataset/operation/StatusDataset.md'):
+def save_columns_not_null_and_not_zero_to_md(df, output_md='progettazione/dataset/operation/StatusDataset.md'):
     # Creiamo una lista per salvare i risultati
     try:
         results = []
@@ -108,17 +107,20 @@ def save_columns_not_null_to_md(df, output_md='progettazione/dataset/operation/S
         for idx, column in enumerate(df.columns, start=1):
             total_rows = len(df)  # Numero totale di righe
             non_null_count = df[column].notnull().sum()  # Valori non nulli
-            percentage = (non_null_count / total_rows) * 100  # Percentuale
-            results.append([idx, column, non_null_count, total_rows, f"{percentage:.2f}%"])
+            non_zero_count = (df[column] != 0).sum()  # Valori non zero
+            percentage_non_null = (non_null_count / total_rows) * 100  # Percentuale di non nulli
+            percentage_non_zero = (non_zero_count / total_rows) * 100  # Percentuale di non zero
+            
+            results.append([idx, column, non_null_count, non_zero_count, total_rows, f"{percentage_non_null:.2f}%", f"{percentage_non_zero:.2f}%"])
 
         # Scrivi i risultati in un file Markdown
         with open(output_md, 'w') as md_file:
-            md_file.write("# Percentuale di Valori Non Nulli per Colonna\n\n")
-            md_file.write("| Indice | Colonna | Non Nulli | Totale Righe | Percentuale Non Nulli |\n")
-            md_file.write("|--------|---------|-----------|--------------|-----------------------|\n")
+            md_file.write("# Percentuale di Valori Non Nulli e Non Zero per Colonna\n\n")
+            md_file.write("| Indice | Colonna | Non Nulli | Non Zero | Totale Righe | Percentuale Non Nulli | Percentuale Non Zero |\n")
+            md_file.write("|--------|---------|-----------|----------|--------------|-----------------------|----------------------|\n")
             
             for result in results:
-                md_file.write(f"| {result[0]} | {result[1]} | {result[2]} | {result[3]} | {result[4]} |\n")
+                md_file.write(f"| {result[0]} | {result[1]} | {result[2]} | {result[3]} | {result[4]} | {result[5]} | {result[6]} |\n")
         
         print(f"Risultati salvati in {output_md}")
         

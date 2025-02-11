@@ -17,14 +17,16 @@ def get_absolute_path(file_name):
     print(f"Il file '{file_name}' non è stato trovato nella directory corrente o nelle sue sottodirectory.\n")
     return None
 
-# Funzione per esportare un dataset "dataset" in formato CSV di nome "csv_file_name" nella directory specificata "dir_name"
-def export_dataset(dataset, csv, directory):
+# Funzione per esportare un dataset "dataset" in formato .csv di nome "csv_file_name" nella directory specificata "dir_name"
+def export_dataset(dataset, file_csv, directory):
     # Specifica il percorso della directory 'dir_name' rispetto alla directory corrente
-    dir_dataset = os.path.join(os.path.dirname(__file__), directory)
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    dir_dataset = os.path.join(project_root, directory)
 
     # Assicurati che la directory 'dir_name' esista, altrimenti creala
     if not os.path.exists(dir_dataset):
         os.makedirs(dir_dataset)
 
     # Esporta il DataFrame 'dataSet' in formato CSV nel percorso specificato
-    dataset.to_csv(os.path.join(dir_dataset, csv), index=False)
+    dataset.to_csv(os.path.join(dir_dataset, file_csv), index=False)
+    print(f"Dataset esportato in '{file_csv}' nella directory '{dir_dataset}'.\n")
