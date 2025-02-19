@@ -22,11 +22,14 @@ def export_dataset(dataset, file_csv, directory):
     # Specifica il percorso della directory 'dir_name' rispetto alla directory corrente
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     dir_dataset = os.path.join(project_root, directory)
+    
+    # Normalizza il percorso per evitare mescolanza di separatori
+    dir_dataset = os.path.normpath(dir_dataset)
 
-    # Assicurati che la directory 'dir_name' esista, altrimenti creala
+    # Se 'dir_name' non esiste la crea
     if not os.path.exists(dir_dataset):
         os.makedirs(dir_dataset)
 
     # Esporta il DataFrame 'dataSet' in formato CSV nel percorso specificato
     dataset.to_csv(os.path.join(dir_dataset, file_csv), index=False)
-    print(f"Dataset esportato in '{file_csv}' nella directory '{dir_dataset}'.\n")
+    print(f"Dataset export: '{os.path.join(dir_dataset, file_csv)}'")

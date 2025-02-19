@@ -1,4 +1,5 @@
 import os
+import re
 import pandas as pd
 
 """
@@ -126,3 +127,32 @@ def save_columns_not_null_and_not_zero_to_md(df, output_md='progettazione/datase
         
     except Exception as e:
         print(f"Errore nel caricamento del dataset: {e}")
+
+"""
+    Calcola e stampa il numero di tuple del df che hanno 'Year-Month' uguale a 'Period'.
+    
+    :param df: DataFrame pandas contenente il dataset.
+"""
+def count_year_month_matches_period(df):
+    # Converti 'Month' in intero con due cifre
+    df['Month_str'] = df['Month'].astype(int).astype(str).str.zfill(2)
+
+    # Crea la colonna 'Year-Month' nel formato 'YYYY-MM'
+    df['Year-Month'] = df['Year'].astype(str) + '-' + df['Month_str']
+
+    # Conta le righe dove 'Year-Month' è uguale a 'Period'
+    corrispondenze = (df['Year-Month'] == df['Period']).sum()
+
+    print(f"Righe con corrispondenza Year-Month e Period: {corrispondenze} / {len(df)}")
+
+    # Rimuove le colonne temporanee
+    df.drop(['Month_str', 'Year-Month'], axis=1, inplace=True)
+
+"""
+    Rimuove le parentesi e il loro contenuto da una stringa.
+    
+    :param s: Stringa da cui rimuovere le parentesi.
+    :return: Stringa senza parentesi.
+"""
+def remove_content_Parentheses(s):
+    return re.sub(r'\([^)]*\)', '', s)

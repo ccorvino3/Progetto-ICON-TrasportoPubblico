@@ -3,7 +3,7 @@
 | Nome Colonna | Tipo di Dato |
 |--------------|--------------|
 | Year | int64 |
-| Month | float64 |
+| Month | int64 |
 | Average travel time (min) | float64 |
 | Number of expected circulations | float64 |
 | Number of cancelled trains | float64 |
@@ -23,7 +23,6 @@
 | Average train delay > 15min | float64 |
 | Number of late trains > 30min | float64 |
 | Number of late trains > 60min | float64 |
-| Period | object |
 | Delay due to external causes | float64 |
 | Delay due to railway infrastructure | float64 |
 | Delay due to traffic management | float64 |
