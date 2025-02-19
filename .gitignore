@@ -1,0 +1,11 @@
+# Ignorare la dir operation di dataset
+progettazione/dataset/operation/
+
+# Ignorare la dir idee dataset di progettazione
+progettazione/idee dataset/
+
+# Ignorare la dir forse scartati di wd
+forse scartati/
+
+# Ignorare tutti i py_cache nel progetto
+**/__pycache__/
