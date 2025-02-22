@@ -9,9 +9,9 @@
   - **Average travel time (min)**: Tempo medio di viaggio dei treni.
   - **Number of cancelled trains**: Numero di treni cancellati.
   - **Number of late trains at departure**: Numero di treni in partenza in ritardo.
+  - **Number of trains late on arrival**: Numero di treni che arrivano in ritardo.
   - **Average delay of late departing trains (min)**: Ritardo medio dei treni in partenza in ritardo.
   - **Average delay of all departing trains (min)**: Ritardo medio di tutti i treni in partenza.
-  - **Number of trains late on arrival**: Numero di treni che arrivano in ritardo.
   - **Average delay of late arriving trains (min)**: Ritardo medio dei treni che arrivano in ritardo.
   - **% trains late due to external causes**: Percentuale di treni in ritardo a causa di cause esterne (maltempo, ostacoli, ecc.).
   - **% trains late due to railway infrastructure**: Percentuale di treni in ritardo a causa dell'infrastruttura ferroviaria.
@@ -23,6 +23,8 @@
   - **Average train delay > 15min**: Ritardo medio dei treni con ritardo superiore ai 15 minuti.
   - **Number of late trains > 30min**: Numero di treni con ritardo superiore ai 30 minuti.
   - **Number of late trains > 60min**: Numero di treni con ritardo superiore ai 60 minuti.
+  - **Year**: Anno di riferimento.
+  - **Month**: Mese di riferimento.
 
 - **Target**:
   - **Average delay of all arriving trains (min)**: Ritardo medio di tutti i treni in arrivo.
@@ -50,7 +52,7 @@
 
 ## Apprendimento Bayesiano
 
-- **Obiettivo**: Date le condizioni operative (mese, cause di ritardo, numero di circolazioni, ecc.), stimare la probabilità che un treno arrivi con un ritardo > 15 minuti.
+- **Obiettivo**: Date le caratteristiche di un treno (eccetto la target), stimare la probabilità di una delle caratteristiche.
 
 - **Caratteristiche per la Predizione**:
 
@@ -63,9 +65,6 @@
   7. **% trains late due to station management and reuse of material**: Percentuale di ritardi dovuti alla gestione della stazione e al riutilizzo del materiale.
   8. **% trains late due to passenger traffic**: Percentuale di ritardi causati dal traffico passeggeri.
 
-- **Target**: Classe binaria: Late > 15 min (Yes/No)
-  - Da ricavare trasformando Number of late trains > 15min:
-    - 1 se il numero è maggiore di 0 (ritardo presente).
-    - 0 altrimenti (nessun ritardo > 15 min).
+- **Target**: Una delle caratteristiche.
 
 ---

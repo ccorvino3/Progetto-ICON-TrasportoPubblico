@@ -4,8 +4,10 @@ progettazione/dataset/operation/
 # Ignorare la dir idee dataset di progettazione
 progettazione/idee dataset/
 
-# Ignorare la dir forse scartati di wd
-forse scartati/
-
 # Ignorare tutti i py_cache nel progetto
 **/__pycache__/
+
+# Ignorare alcuni file
+progettazione/dataset/Tasks.md
+progettazione/dataset/df_preprocessed_continuous.csv
+progettazione/dataset/df_preprocessed_discrete.csv
