@@ -1,87 +1,125 @@
-from matplotlib import pyplot as plt
-import networkx as nx
-from pgmpy.models import BayesianNetwork as Bayesian
-from pgmpy.estimators import MaximumLikelihoodEstimator
-from pgmpy.inference import VariableElimination
-
+import pandas as pd
 import numpy as np
-np.set_printoptions(suppress=True) # Per evitare che i numeri vengano stampati in notazione scientifica
+import matplotlib.pyplot as plt
+import networkx as nx
+from pgmpy.estimators import HillClimbSearch, BicScore
+from pgmpy.models import BayesianNetwork
+from pgmpy.inference import VariableElimination
+from pgmpy.factors.discrete import TabularCPD
+
+# Per evitare che i numeri vengano stampati in notazione scientifica
+np.set_printoptions(suppress=True)
 
 def main(df):
-    # Definizione della struttura della rete bayesiana più complessa
+    # Definizione della struttura della rete bayesiana
     model = bayesian_learning(df)
     print("1. Rete bayesiana addestrata con successo.")
 
     # Visualizzazione della rete bayesiana
-    show_bayesian_network(model)
+    display_bayesian_graph(model)
     print("2. Visualizzazione completata.")
 
-    # Grafico di inferenza
-    # Esempio di inferenza
-    infer = VariableElimination(model)
-    evidence = {
-        'Month': 4,
-        'Average travel time (min)': 2,
-        '% trains late due to external causes': 2,
-        '% trains late due to railway infrastructure': 1,
-        '% trains late due to traffic management': 1,
-        '% trains late due to rolling stock': 1,
-        '% trains late due to station management': 1,
-        '% trains late due to passenger traffic': 0
-    }
-    plot_inference_results(infer, evidence)
-    print("3. Grafico di inferenza completato.")
+    # Inferenza sulla rete bayesiana e grafico a barre
+    infer_bayesian(model, df, "Number of late trains at departure", row_index=0)
+    print("3. Inferenza completata.")
 
-    prediction = infer.query(variables=['Late > 15 min'], evidence=evidence)
-    print(f"Prediction (evidence={evidence}): {prediction.values[1]  * 100:.2f}% chance of being late > 15 min")
-    print("4. Predizione completata.")
     print("---------------------------------------\n")
 
 def bayesian_learning(df):
-    print("Addestramento della rete bayesiana...")
-    model = Bayesian([
-        # Relazioni tra il mese e le cause di ritardo
-        ('Month', '% trains late due to external causes'),
-        ('Month', '% trains late due to railway infrastructure'),
-        ('Month', '% trains late due to traffic management'),
-        ('Month', '% trains late due to rolling stock'),
-        ('Month', '% trains late due to station management'),
-        ('Month', '% trains late due to passenger traffic'),
+    # Creazione del modello bayesiano
+    hc = HillClimbSearch(df)
+    best_model = hc.estimate(scoring_method=BicScore(df))
+    model = BayesianNetwork(best_model.edges())
 
-        # Relazione tra il mese e il tempo di viaggio medio
-        ('Month', 'Average travel time (min)'),
+    cpds = []
+    for node in df.columns:
+        parents = list(model.get_parents(node))
+        
+        # Ottieni gli stati possibili per il nodo.
+        # Se possibile, li converto in int, altrimenti li lascio com'è.
+        try:
+            possible_states = list(map(int, sorted(df[node].unique())))
+        except Exception:
+            possible_states = sorted(df[node].unique())
+        num_states = len(possible_states)
+        
+        if not parents:
+            # CPD marginale per variabili senza genitori
+            prob_series = df[node].value_counts(normalize=True)
+            try:
+                prob_series.index = list(map(int, prob_series.index))
+            except Exception:
+                pass
+            prob_series = prob_series.reindex(possible_states, fill_value=0)
+            prob_values = prob_series.values.astype(float)
+            total = prob_values.sum()
+            if total != 0:
+                prob_values /= total
+            else:
+                prob_values = np.full(prob_values.shape, 1.0 / num_states)
+            cpd = TabularCPD(variable=node, variable_card=num_states,
+                             values=prob_values.reshape(-1, 1))
+        else:
+            # CPD condizionata per variabili con genitori
+            # Per ogni genitore, otteniamo i possibili stati (convertendo in int se possibile)
+            parents_states = {}
+            for parent in parents:
+                try:
+                    parents_states[parent] = list(map(int, sorted(df[parent].unique())))
+                except Exception:
+                    parents_states[parent] = sorted(df[parent].unique())
+            parent_card = [len(parents_states[parent]) for parent in parents]
+            
+            # Raggruppa per i genitori e calcola la distribuzione normalizzata
+            # Il risultato di groupby:
+            #   - Index: combinazioni dei genitori
+            #   - Colonne: valori unici della variabile (node)
+            grouped = df.groupby(parents)[node].value_counts(normalize=True).unstack(fill_value=0)
+            # Trasponi in modo da avere:
+            #   - Index: valori della variabile (node)
+            #   - Colonne: combinazioni dei genitori
+            grouped = grouped.T
+            
+            # Reindicizza le righe con i possibili stati
+            reindexed_rows = grouped.reindex(possible_states, fill_value=0)
+            
+            # Crea il MultiIndex completo per le colonne dai possibili stati dei genitori
+            new_columns = pd.MultiIndex.from_product(
+                [parents_states[parent] for parent in parents],
+                names=parents
+            )
+            reindexed_df = reindexed_rows.reindex(columns=new_columns, fill_value=0)
+            
+            cpd_values = reindexed_df.values.astype(float)
+            
+            # Normalizza ogni colonna: se la somma è zero, assegna distribuzione uniforme
+            sum_values = cpd_values.sum(axis=0, keepdims=True)
+            for j in range(cpd_values.shape[1]):
+                if sum_values[0, j] == 0:
+                    cpd_values[:, j] = 1.0 / num_states
+                else:
+                    cpd_values[:, j] /= sum_values[0, j]
+                    
+            cpd = TabularCPD(variable=node, variable_card=num_states, values=cpd_values,
+                             evidence=parents, evidence_card=parent_card)
+            
+        cpds.append(cpd)
 
-        # Relazioni tra le cause di ritardo e il ritardo maggiore di 15 minuti
-        ('% trains late due to external causes', 'Late > 15 min'),
-        ('% trains late due to railway infrastructure', 'Late > 15 min'),
-        ('% trains late due to traffic management', 'Late > 15 min'),
-        ('% trains late due to rolling stock', 'Late > 15 min'),
-        ('% trains late due to station management', 'Late > 15 min'),
-        ('% trains late due to passenger traffic', 'Late > 15 min'),
+    # Aggiungi tutte le CPD al modello
+    model.add_cpds(*cpds)
 
-        # Relazione tra ritardi passeggeri e gestione della stazione
-        ('% trains late due to passenger traffic', '% trains late due to station management'),
+    # Verifica la validità del modello
+    try:
+        model.check_model()
+        print("\n✅ Il modello è valido.")
+    except ValueError as e:
+        print("\n❌ Errore nel modello bayesiano:")
+        print(e)
 
-        # Altri possibili legami
-        ('% trains late due to rolling stock', '% trains late due to railway infrastructure'),
-        ('% trains late due to station management', '% trains late due to rolling stock'),
-
-        # Relazioni tra il tempo di viaggio medio e le cause di ritardo
-        ('Average travel time (min)', '% trains late due to external causes'),
-        ('Average travel time (min)', '% trains late due to traffic management'),
-        ('Average travel time (min)', '% trains late due to railway infrastructure'),
-        ('Average travel time (min)', '% trains late due to rolling stock'),
-
-        # Dipendenza tra il tempo di viaggio e il ritardo per la gestione del traffico
-        ('Average travel time (min)', '% trains late due to traffic management')
-    ])
-
-    # Stima delle probabilità condizionate (CPD) con Maximum Likelihood
-    model.fit(df, estimator=MaximumLikelihoodEstimator)
-    
     return model
 
-def show_bayesian_network(model):
+
+def display_bayesian_graph(model):
     print("Visualizzazione della rete bayesiana in layout circolare...")
     graph = nx.DiGraph()
     graph.add_edges_from(model.edges())
@@ -94,19 +132,37 @@ def show_bayesian_network(model):
     plt.title("Rete Bayesiana del Ritardo dei Treni", fontsize=15)
     plt.show()
 
-def plot_inference_results(infer, evidence):
-    # Inferenza sulla probabilità di 'Late > 15 min'
-    prediction = infer.query(variables=['Late > 15 min'], evidence=evidence)
+def infer_bayesian(model, df, target_var, row_index=0):
+    print("3. Inferenza sulla rete bayesiana...")
 
-    # Estrazione dei dati per il grafico
-    labels = prediction.values  # Valori di probabilità per 'Late > 15 min'
-    outcome = prediction.state_names['Late > 15 min']  # Stati possibili (0 o 1)
+    # Eseguiamo l'inferenza
+    inference = VariableElimination(model)
 
-    # Creazione del grafico
-    plt.bar(outcome, labels, color='skyblue')
-    plt.xlabel("Late > 15 min (Yes/No)")
+    # Selezioniamo la riga come esempio
+    example = df.iloc[row_index].to_dict()
+
+    # Prepariamo le evidenze eliminando il target
+    evidence = example.copy()
+    evidence.pop(target_var, None)
+
+    # Eseguiamo la query per ottenere la distribuzione a posteriori sul target
+    query_result = inference.query([target_var], evidence=evidence)
+
+    # Visualizziamo i risultati
+    print(f"Inferenza per il target '{target_var}' data la tupla esempio:\n{query_result}")
+    plot_inference_results(query_result, target_var, row_index)
+
+    return query_result
+
+def plot_inference_results(query_result, target_var, row_index):
+    print(f"Visualizzazione della distribuzione a posteriori per '{target_var}'...")
+    factor = query_result
+    states = list(range(factor.cardinality[0]))
+
+    pd.Series(factor.values, index=states).plot(kind='bar', color='skyblue')
+    plt.title(f"Distribuzione: '{target_var}' ({row_index} riga)")
+    plt.xlabel("Valore discretizzato")
     plt.ylabel("Probabilità")
-    plt.title("Probabilità Predetta di Ritardo Maggiore di 15 Minuti")
     plt.show()
 
 # if __name__ == "__main__":

@@ -1,5 +1,5 @@
-from sklearn.preprocessing import KBinsDiscretizer, StandardScaler
-
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
 from utils.file import export_dataset
 
 def preprocess_continuous(df):
@@ -35,44 +35,29 @@ def preprocess_continuous(df):
     export_dataset(df, "df_preprocessed_continuous.csv", "progettazione/dataset")
     print("---------------------------------------\n")
 
-    return df
+    return df, scaler
 
-def preprocess_discrete(df):
-    # Rinomina le colonne per renderle più leggibili
-    df.rename(columns={
-        '% trains late due to external causes (weather, obstacles, suspicious packages, malevolence, social movements, etc.)': '% trains late due to external causes',
-        '% trains late due to railway infrastructure (maintenance, works)': '% trains late due to railway infrastructure',
-        '% trains late due to traffic management (rail line traffic, network interactions)': '% trains late due to traffic management',
-        '% trains late due to passenger traffic (affluence, PSH management, connections)': '% trains late due to passenger traffic',
-        '% trains late due to rolling stock': '% trains late due to rolling stock',
-        '% trains late due to station management and reuse of material': '% trains late due to station management'
-    }, inplace=True)
+def preprocess_discrete(df, columns, bins=4):
+    df_disc = df[columns].copy()
 
     # Rendo la colonna 'Month' un intero anziché float
-    df['Month'] = df['Month'].astype(int)
-
-    # Crea una colonna binaria: 1 se ci sono treni in ritardo > 15 min, altrimenti 0
-    df['Late > 15 min'] = (df['Number of late trains > 15min'] > 0).astype(int)
-
-    # Elimina le colonne non rilevanti
-    df.drop(columns=[
-        'Comment (optional) delays at departure', 'Comment (optional) delays on arrival',
-        'Departure station', 'Arrival station', 'Period', 'Number of late trains > 15min'
-    ], inplace=True)
+    if 'Month' in columns:
+        df_disc['Month'] = df['Month'].astype(int)
 
     # Gestisce i valori mancanti
-    float_columns = df.select_dtypes(include=['float64']).columns
-    df[float_columns] = df[float_columns].fillna(df[float_columns].mean())
+    float_columns = df_disc.select_dtypes(include=['float64']).columns
+    df_disc[float_columns] = df_disc[float_columns].fillna(df_disc[float_columns].mean())
 
-    # Discretizza le variabili continue
-    discretizer = KBinsDiscretizer(n_bins=4, encode='ordinal', strategy='uniform')
-    df[float_columns] = discretizer.fit_transform(df[float_columns])
+    # Discretizza le variabili numeriche
+    for col in columns:
+        if pd.api.types.is_numeric_dtype(df_disc[col]) and df_disc[col].nunique() > bins:
+            df_disc[col] = pd.qcut(df_disc[col], q=bins, labels=False, duplicates='drop')
 
     print("Preprocessing completato.")
-    export_dataset(df, "df_preprocessed_discrete.csv", "progettazione/dataset")
+    export_dataset(df_disc, "df_preprocessed_discrete.csv", "progettazione/dataset")
     print("---------------------------------------\n")
 
-    return df
+    return df_disc
 
 # if __name__ == "__main__":
 #     main()

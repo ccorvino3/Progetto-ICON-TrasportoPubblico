@@ -1,40 +1,49 @@
 from pyswip import Prolog
-
+from utils.dataset import inverse_transform_column, convert_float_to_time_format as c_time_f
 import numpy as np
-np.set_printoptions(suppress=True) # Per evitare che i numeri siano stampati in notazione scientifica
+
+# Per evitare che i numeri siano stampati in notazione scientifica
+np.set_printoptions(suppress=True)
 
 # File prolog per forza presenti nella working directory se no la funzione consult dà errore di path
+FILE_FACTS = "random_forest_facts.pl"
+FILE_MODEL = "model_delay.pl"
 
-def main(X, random_forest):
+def main(X, random_forest, target, scaler):
     # Esegui la conversione dell'albero in regole Prolog
     tree = random_forest.estimators_[0]
     convert_tree_in_fact(tree)
     
     # Init Prolog e i due treni di esempio
     prolog = Prolog()
-    prolog.consult("model_delay.pl")
-    prolog.consult("random_forest_facts.pl")
+    prolog.consult(FILE_FACTS)
+    prolog.consult(FILE_MODEL)
     train1 = list(X.iloc[0].values.astype(float))
     train2 = list(X.iloc[1].values.astype(float))
 
-    # # Query per ottenere il ritardo predetto per i due treni di esempio
+    # Query per ottenere il ritardo predetto per i due treni di esempio
     delay1 = query_predicted_delay(prolog, train1)
     delay2 = query_predicted_delay(prolog, train2)
-    print(f"Ritardo predetto per train1 -> {delay1}, per train2 -> {delay2}")
+    delay1_denormalized = inverse_transform_column(delay1, scaler, target)
+    delay2_denormalized = inverse_transform_column(delay2, scaler, target)
+    print(f"Ritardo predetto per\n\ttrain1 -> {c_time_f(delay1_denormalized)}\n\tper train2 -> {c_time_f(delay2_denormalized)}\n")
 
     dtree_pred_1 = tree.predict([X.iloc[0].values])
     dtree_pred_2 = tree.predict([X.iloc[1].values])
-    print(f"Scikit prediction: df[0] = {X.iloc[0].values} -> {dtree_pred_1}")
-    print(f"Scikit prediction: df[1] = {X.iloc[1].values} -> {dtree_pred_2}")
+    dtree_pred_1_denormalized = inverse_transform_column(dtree_pred_1, scaler, target)
+    dtree_pred_2_denormalized = inverse_transform_column(dtree_pred_2, scaler, target)
+    print(f"Scikit prediction: df[0] = {X.iloc[0].values} -> {c_time_f(dtree_pred_1_denormalized)}")
+    print(f"Scikit prediction: df[1] = {X.iloc[1].values} -> {c_time_f(dtree_pred_2_denormalized)}\n")
     
     # Query per individuare il treno con il ritardo massimo
     best_train, best_delay = query_max_delay(prolog, [train1, train2])
-    print(f"Treno {best_train} con il ritardo massimo {best_delay}")
+    best_delay_denormalized = inverse_transform_column(best_delay, scaler, target)
+    print(f"Treno {best_train} con il ritardo massimo {c_time_f(best_delay_denormalized)}")
     
     print("Predizione in Prolog e KB completata.")
     print("---------------------------------------\n")
 
-def convert_tree_in_fact(estimator, filepath='random_forest_facts.pl'):
+def convert_tree_in_fact(estimator, filepath=FILE_FACTS):
     with open(filepath, 'w') as f:
         # Scrivere l'intestazione del file Prolog
         f.write("% Predizione dell'albero Random Forest\n")

@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
-import seaborn as sns
 from sklearn.model_selection import KFold, learning_curve, GridSearchCV
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-import numpy as np
+# Per evitare che i numeri vengano stampati in notazione scientifica
 np.set_printoptions(suppress=True) # Per evitare che i numeri vengano stampati in notazione scientifica
 
 # Per la previsione:
@@ -32,15 +32,13 @@ def main(X, y):
 
     # Identificare il miglior modello in base a RMSE
     best_model_name = min(evaluation_metrics, key=lambda x: evaluation_metrics[x]['RMSE'])
-    print(f"4. Il miglior modello è: {best_model_name}")
+    print(f"4. Best model: {best_model_name}")
 
     # Plotting
-    y_pred_cv = evaluation_metrics[best_model_name]['Predictions']
-    period = X['Year'].astype(str) + '-' + X['Month'].astype(str).str.zfill(2)
-    plot_predictions(best_model_name, y, y_pred_cv, period)
-    plot_learning_curve(models[best_model_name], X, y, kfold, best_model_name)
-    plot_residuals(y, y_pred_cv, best_model_name)
-    plot_feature_importance(models[best_model_name], X.columns, best_model_name)
+    # y_pred_cv = evaluation_metrics[best_model_name]['Predictions']
+    plot_models_mae(evaluation_metrics)
+    for (model_name, model) in models.items():
+        plot_learning_curve(model, X, y, kfold, model_name)
     print("5. Grafici generati.")
 
     print("Predizione completata.")
@@ -146,75 +144,42 @@ def evaluate_models(models, X, y, kfold):
     return evaluation_metrics
 
 def print_metrics(evaluation_metrics):
-    for model_name, metrics in evaluation_metrics.items():
-        print(f"\nModello: {model_name}")
-        print(f" - MAE: {metrics['MAE']:.2f}")
-        print(f" - MSE: {metrics['MSE']:.2f}")
-        print(f" - RMSE: {metrics['RMSE']:.2f}")
-    print() # Per leggibilità nella console
-
-# Plot Predizioni vs Valori Reali
-def plot_predictions(best_model_name, y, y_pred, period):
-    sns.set_theme(style="whitegrid")
-    plt.figure(figsize=(16,8))
-    plt.plot(period, y, label='Actual Delay', color='blue', marker='o')
-    plt.plot(period, y_pred, label='Predicted Delay', color='red', linestyle='--', marker='x')
-    plt.title(f'Average Train Delay: Actual vs Predicted ({best_model_name})')
-    plt.xlabel('Period')
-    plt.ylabel('Delay (min)')
-    plt.legend()
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
+    # Converte il dizionario in DataFrame e trasforma l'indice in una colonna (modello)
+    tb = pd.DataFrame(evaluation_metrics).T[['MAE', 'MSE', 'RMSE']]
+    tb = tb.round(2) # Arrotonda a 2 decimali e formatta in stringa per una visualizzazione più chiara
+    print(tb.to_string(), "\n")
 
 # Plot Learning Curve
 def plot_learning_curve(model, X, y, kfold, model_name):
     train_sizes, train_scores, test_scores = learning_curve(
-        model, X, y, cv=kfold, scoring='neg_mean_squared_error', n_jobs=-1, train_sizes=np.linspace(0.1, 1.0, 10)
+        model, X, y, cv=kfold, scoring='neg_mean_absolute_error', n_jobs=-1, train_sizes=np.linspace(0.1, 1.0, 10)
     )
-    train_mean = np.mean(train_scores, axis=1)
-    test_mean = np.mean(test_scores, axis=1)
+    # Poiché il punteggio è negativo, inverto il segno per ottenere il MAE
+    train_mae = -np.mean(train_scores, axis=1)
+    test_mae = -np.mean(test_scores, axis=1)
+
     plt.figure(figsize=(10,6))
-    plt.plot(train_sizes, train_mean, label='Training Score', marker='o', color='blue')
-    plt.plot(train_sizes, test_mean, label='Cross-Validation Score', marker='s', color='red')
-    plt.title(f'Learning Curve for {model_name}')
-    plt.xlabel('Number of Training Examples')
-    plt.ylabel('Negative Mean Squared Error')
+    plt.plot(train_sizes, train_mae, label='Training MAE', marker='o', color='blue')
+    plt.plot(train_sizes, test_mae, label='Cross-Validation MAE', marker='s', color='red')
+    plt.title(f'Learning Curve ({model_name}, MAE)')
+    plt.xlabel('Numero di esempi di training')
+    plt.ylabel('Errore Medio Assoluto (MAE)')
     plt.legend()
     plt.grid(True)
     plt.show()
 
-# Plot Residuals
-def plot_residuals(y_true, y_pred, model_name):
-    residuals = y_true - y_pred
-    plt.figure(figsize=(10,6))
-    sns.histplot(residuals, kde=True, color='purple', bins=30)
-    plt.title(f'Residual Distribution for {model_name}')
-    plt.xlabel('Residuals (Actual - Predicted)')
-    plt.ylabel('Frequency')
-    plt.show()
+def plot_models_mae(evaluation_metrics):
+    # Estrai i nomi dei modelli e i corrispondenti MAE
+    models = list(evaluation_metrics.keys())
+    mae_values = [evaluation_metrics[m]['MAE'] for m in models]
     
-    plt.figure(figsize=(10,6))
-    plt.scatter(y_pred, residuals, alpha=0.6, color='green')
-    plt.axhline(0, color='red', linestyle='--')
-    plt.title(f'Residuals vs Predicted for {model_name}')
-    plt.xlabel('Predicted Values')
-    plt.ylabel('Residuals')
-    plt.show()
-
-# Plot Feature Importance
-def plot_feature_importance(model, feature_names, model_name):
-    if not hasattr(model, 'feature_importances_'):
-        print(f"Il modello {model_name} non supporta la feature importance.")
-        return
-
-    importances = model.feature_importances_
-    indices = np.argsort(importances)[::-1]
-    plt.figure(figsize=(10,6))
-    sns.barplot(x=importances[indices], y=np.array(feature_names)[indices], hue=np.array(feature_names)[indices], palette="viridis", legend=False)
-    plt.title(f'Feature Importance for {model_name}')
-    plt.xlabel('Importance')
-    plt.ylabel('Feature')
+    # Crea il grafico a barre
+    plt.figure(figsize=(8, 6))
+    plt.bar(models, mae_values, color='skyblue')
+    plt.xlabel('Modelli')
+    plt.ylabel('MAE')
+    plt.title('Confronto delle performance dei modelli (MAE)')
+    plt.ylim(0, max(mae_values) * 1.2)  # Imposta un limite superiore per migliorare la visualizzazione
     plt.show()
 
 # if __name__ == "__main__":

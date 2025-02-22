@@ -2,6 +2,8 @@ import os
 import re
 import pandas as pd
 
+import numpy as np
+
 """
     Carica un dataset CSV dato il nome del file e la cartella di destinazione.
 
@@ -156,3 +158,49 @@ def count_year_month_matches_period(df):
 """
 def remove_content_Parentheses(s):
     return re.sub(r'\([^)]*\)', '', s)
+
+"""
+    Converte un valore float in minuti e secondi con la gestione di anticipi e ritardi.
+
+    Parameters:
+        value (float): Il valore in minuti (positivo per ritardo, negativo per anticipo).
+
+    Returns:
+        str: Il valore convertito in formato "X' Y\"" con l'aggiunta di "in anticipo" se negativo.
+"""
+def convert_float_to_time_format(value):
+    if isinstance(value, np.ndarray):
+        value = value.item()
+
+    if value == 0:
+        return '0s'
+
+    sign = "in anticipo" if value < 0 else ""
+
+    # Valore assoluto per il calcolo di minuti e secondi
+    abs_value = abs(value)
+
+    # Calcola minuti e secondi
+    minutes = int(abs_value)
+    seconds = round((abs_value - minutes) * 60)
+
+    # Formatta il risultato
+    if minutes == 0:
+        return f'{seconds}s {sign}'
+    else:
+        return f"{minutes}m {seconds}s {sign}"
+
+"""
+    Ripristina i valori originali di una singola colonna scalata.
+    
+    Poiché lo scaler è stato adattato su più colonne, per invertire la normalizzazione
+    di una colonna specifica è necessario usare la media e lo scale corrispondenti.
+"""
+def inverse_transform_column(scaled_value, scaler, column_name):
+    # Trovo l'indice della colonna all'interno dello scaler
+    col_index = list(scaler.feature_names_in_).index(column_name)
+    
+    # Calcolo il valore originale usando la formula inversa: valore_originale = valore_scalato * scale + mean
+    original_values = scaled_value * scaler.scale_[col_index] + scaler.mean_[col_index]
+    
+    return original_values
