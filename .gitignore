@@ -4,6 +4,9 @@ progettazione/dataset/operation/
 # Ignorare la dir idee dataset di progettazione
 progettazione/idee dataset/
 
+# Ignorare le img di documentazione
+documentazione/res/
+
 # Ignorare tutti i py_cache nel progetto
 **/__pycache__/
 

@@ -166,7 +166,10 @@ def plot_learning_curve(model, X, y, kfold, model_name):
     plt.ylabel('Errore Medio Assoluto (MAE)')
     plt.legend()
     plt.grid(True)
-    plt.show()
+    # plt.show()
+    plt.savefig(f"documentazione/res/drawable/img_supervised/learning_curve_{model_name}.png")
+    plt.close()
+    print(f"Salvato in documentazione/res/drawable/img_supervised/learning_curve_{model_name}.png")
 
 def plot_models_mae(evaluation_metrics):
     # Estrai i nomi dei modelli e i corrispondenti MAE
@@ -180,7 +183,10 @@ def plot_models_mae(evaluation_metrics):
     plt.ylabel('MAE')
     plt.title('Confronto delle performance dei modelli (MAE)')
     plt.ylim(0, max(mae_values) * 1.2)  # Imposta un limite superiore per migliorare la visualizzazione
-    plt.show()
+    # plt.show()
+    plt.savefig("documentazione/res/drawable/img_supervised/mae_models.png")
+    plt.close()
+    print(f"Salvato in documentazione/res/drawable/img_supervised/mae_models.png")
 
 # if __name__ == "__main__":
 #     main()

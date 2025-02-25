@@ -1,13 +1,18 @@
-% Prende in input una lista di features e salva man mano il ritardo più alto
+% Caso ricorsivo: confronta il ritardo del primo treno con il massimo ritardo calcolato per il resto della lista.
 treno_piu_in_ritardo([Features|AltriTreni], Treno, Ritardo) :-
     predire_ritardo(Features, RitardoCorrente),
-    treno_piu_in_ritardo(AltriTreni, MaxTreno, MaxRitardo),
-    (RitardoCorrente > MaxRitardo ->
-     Treno = Features, Ritardo = RitardoCorrente
-     ;
-     Treno = MaxTreno, Ritardo = MaxRitardo).
+    treno_piu_in_ritardo(AltriTreni, TempTrain, TempDelay),
+    (RitardoCorrente > TempDelay ->
+        Treno = Features, Ritardo = RitardoCorrente
+    ;
+        Treno = TempTrain, Ritardo = TempDelay
+    ).
 
-treno_piu_in_ritardo([], [], 0).
+% Caso base: se c è un solo treno, restituisci le sue caratteristiche e il ritardo predetto.
+treno_piu_in_ritardo([Features], Features, Ritardo) :-
+    predire_ritardo(Features, Ritardo).
+
+% treno_piu_in_ritardo([], [], 0). Mi sa che non serve.
 
 ritardo_conveniente(Features, RitardoProposto) :-
     predire_ritardo(Features, RitardoPredetto),

@@ -20,7 +20,7 @@ def main(df):
     print("2. Visualizzazione completata.")
 
     # Inferenza sulla rete bayesiana e grafico a barre
-    infer_bayesian(model, df, "Number of late trains at departure", row_index=0)
+    infer_bayesian(model, df, "Number of trains late on arrival", row_index=0)
     print("3. Inferenza completata.")
 
     print("---------------------------------------\n")
@@ -130,7 +130,10 @@ def display_bayesian_graph(model):
     nx.draw(graph, pos, with_labels=True, node_size=3000, node_color='skyblue', 
             font_size=10, font_weight='bold', arrows=True)
     plt.title("Rete Bayesiana del Ritardo dei Treni", fontsize=15)
-    plt.show()
+    # plt.show()
+    plt.savefig("documentazione/res/drawable/img_bayesian/bayesian_network.png")
+    plt.close()
+    print("Salvato in documentazione/res/drawable/img_bayesian/bayesian_network.png")
 
 def infer_bayesian(model, df, target_var, row_index=0):
     print("3. Inferenza sulla rete bayesiana...")
@@ -163,7 +166,10 @@ def plot_inference_results(query_result, target_var, row_index):
     plt.title(f"Distribuzione: '{target_var}' ({row_index} riga)")
     plt.xlabel("Valore discretizzato")
     plt.ylabel("Probabilità")
-    plt.show()
+    # plt.show()
+    plt.savefig("documentazione/res/drawable/img_bayesian/posterior_distribution.png")
+    plt.close()
+    print("Salvato in documentazione/res/drawable/img_bayesian/posterior_distribution.png")
 
 # if __name__ == "__main__":
 #     main()

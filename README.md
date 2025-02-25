@@ -6,7 +6,7 @@ Repository per il progetto di Ingegneria della conoscenza 2023-2024 realizzato d
 Per installare il progetto è necessario clonare la repository con il seguente comando:
 
 ```bash
-git clone https://github.com/ccorvino3/Progetto-ICON-TrasportoPubblico,git
+git clone https://github.com/ccorvino3/Progetto-ICON-TrasportoPubblico.git
 ```
 
 Ed installare SWI-Prolog in base al sistema operativo in uso dal sito ufficiale: [SWI-Prolog](https://www.swi-prolog.org/download/stable)

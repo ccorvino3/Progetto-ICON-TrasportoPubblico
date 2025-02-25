@@ -37,10 +37,10 @@ def load_dataset(folder_path, file_name):
     :param df: DataFrame pandas contenente il dataset.
     :param filename: Il nome del file Markdown in cui scrivere i dati.
 """
-def print_columns_and_types_to_md(df, output_md='progettazione/dataset/operation/TypesColumnsDataset.md'):
+def print_columns_and_types_to_md(df, filename='progettazione/dataset/operation/TypesColumnsDataset.md'):
     try:
         # Crea o apre il file Markdown in modalità scrittura
-        with open(output_md, 'w') as f:
+        with open(filename, 'w') as f:
             # Scrive l'intestazione della tabella
             f.write("# Colonne e Tipi di Dati\n\n")
             f.write("| Nome Colonna | Tipo di Dato |\n")
@@ -50,7 +50,7 @@ def print_columns_and_types_to_md(df, output_md='progettazione/dataset/operation
             for column in df.columns:
                 f.write(f"| {column} | {df[column].dtype} |\n")
         
-        print(f"Risultati salvati in {output_md}")
+        print(f"Risultati salvati in {filename}")
     except Exception as e:
         print(f"Errore nel caricamento del dataset: {e}")
 

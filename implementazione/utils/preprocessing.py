@@ -1,41 +1,50 @@
+import re
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from utils.file import export_dataset
 
-def preprocess_continuous(df):
+def preprocess_continuous(df, X, y):
+    df_contin = df[X].copy()
+    
+    # Aggiunge la colonna target al DataFrame
+    df_contin[y] = df[y]
+
     # Rinomina le colonne per renderle più leggibili
-    df.rename(columns={
-        '% trains late due to external causes (weather, obstacles, suspicious packages, malevolence, social movements, etc.)': '% trains late due to external causes',
-        '% trains late due to railway infrastructure (maintenance, works)': '% trains late due to railway infrastructure',
-        '% trains late due to traffic management (rail line traffic, network interactions)': '% trains late due to traffic management',
-        '% trains late due to passenger traffic (affluence, PSH management, connections)': '% trains late due to passenger traffic'
-    }, inplace=True)
+    clean_column_names(df_contin, X)
 
     # Rendo la colonna 'Month' un intero anziché float
-    df['Month'] = df['Month'].astype(int)
+    if "Month" in X:
+        df_contin['Month'] = df_contin['Month'].astype(int)
 
-    # Droppa le colonne non rilevanti per l'analisi
-    # stations_name = df[['Departure station', 'Arrival station']]
-    df = df.drop(
-        columns=[
-            'Comment (optional) delays at departure', 'Comment (optional) delays on arrival', # Commenti non rilevanti per l'analisi
-            "Departure station", "Arrival station",  # Stazioni di partenza e arrivo non rilevanti per l'analisi
-            "Period"] # Periodo superflua per l'analisi perché sta già la divisione in 'Anno' e 'Mese'
-    )
+    # Siccome copio in df_contin solo le colonne X, non mi serve droppare tutte quelle non rilevanti per l'analisi
 
     # Gestisce i valori mancanti
-    float_columns = df.select_dtypes(include=['float64']).columns
-    df[float_columns] = df[float_columns].fillna(df[float_columns].mean())
+    float_columns = df_contin.select_dtypes(include=['float64']).columns
+    df_contin[float_columns] = df_contin[float_columns].fillna(df_contin[float_columns].mean())
 
     # Normalizza le variabili numeriche
     scaler = StandardScaler()
-    df[float_columns] = scaler.fit_transform(df[float_columns])
+    df_contin[float_columns] = scaler.fit_transform(df_contin[float_columns])
 
     print("Preprocessing completato.")
-    export_dataset(df, "df_preprocessed_continuous.csv", "progettazione/dataset")
+    export_dataset(df_contin, "df_preprocessed_continuous.csv", "progettazione/dataset")
     print("---------------------------------------\n")
 
-    return df, scaler
+    return df_contin, scaler
+
+def clean_column_names(df, features):
+    # Modifica sia il DataFrame che la lista features in un unico ciclo
+    for i, col in enumerate(df.columns):
+        if "% trains late" in col:
+            # Rimuove il contenuto tra parentesi tonde (incluse le parentesi)
+            cleaned_col = re.sub(r'\(.*?\)', '', col).strip()
+            df.rename(columns={col: cleaned_col}, inplace=True)
+            
+            # Aggiorna la lista features direttamente
+            if col in features:
+                features[features.index(col)] = cleaned_col
+    
+    return df, features
 
 def preprocess_discrete(df, columns, bins=4):
     df_disc = df[columns].copy()
