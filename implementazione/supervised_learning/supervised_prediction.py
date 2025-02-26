@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')  # Usa un backend che non dipende da Tkinter
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np

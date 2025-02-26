@@ -196,6 +196,10 @@ def convert_float_to_time_format(value):
     di una colonna specifica è necessario usare la media e lo scale corrispondenti.
 """
 def inverse_transform_column(scaled_value, scaler, column_name):
+    # Se la colonna non è presente nei dati dello scaler, non fare nulla
+    if column_name not in scaler.feature_names_in_:
+        return scaled_value
+
     # Trovo l'indice della colonna all'interno dello scaler
     col_index = list(scaler.feature_names_in_).index(column_name)
     

@@ -1,4 +1,4 @@
-% Prende in input una lista di features e salva man mano il ritardo più alto
+% Passo ricorsivo: Prende in input una lista di features e salva man mano il ritardo più alto
 treno_piu_in_ritardo([Features|AltriTreni], Treno, Ritardo) :-
     predire_ritardo(Features, RitardoCorrente),
     treno_piu_in_ritardo(AltriTreni, MaxTreno, MaxRitardo),
@@ -7,26 +7,33 @@ treno_piu_in_ritardo([Features|AltriTreni], Treno, Ritardo) :-
      ;
      Treno = MaxTreno, Ritardo = MaxRitardo).
 
-treno_piu_in_ritardo([], [], 0).
+% Passo base: se c è un solo treno, restituisci le sue caratteristiche e il ritardo predetto.
+treno_piu_in_ritardo([Features], Features, Ritardo) :-
+    predire_ritardo(Features, Ritardo).
 
+% treno_piu_in_ritardo([], [], 0). Dava un errore quindi ho cambiato il passo base con quello che sta sopra
+
+% Predizione del ritardo più conveniente
 ritardo_conveniente(Features, RitardoProposto) :-
     predire_ritardo(Features, RitardoPredetto),
     RitardoProposto < RitardoPredetto.
 
+% Predizione del ritardo
 predire_ritardo(Features, Ritardo) :-
     reverse(Features, FeaturesInvertite),
     calcolare_incremento(FeaturesInvertite, 0, Ritardo).
 
-% Predicato per calcolare gli incrementi basati sulle caratteristiche
+% Passo ricorsivo: Predicato per calcolare gli incrementi basati sulle caratteristiche
 calcolare_incremento([Feature|AltreFeature], RitardoParziale, Ritardo) :-
     length(AltreFeature, Indice),
     incremento_feature(Indice, Feature, Incremento),
     NuovoRitardoParziale is RitardoParziale + Incremento,
     calcolare_incremento(AltreFeature, NuovoRitardoParziale, Ritardo).
 
+% Passo base: Se non ci sono più feature da analizzare, restituisci il ritardo parziale
 calcolare_incremento([], RitardoParziale, RitardoParziale).
 
-% Incrementi basati sulle caratteristiche
+% Di seguito gli incrementi basati sulle caratteristiche
 
 % Year (Anni più recenti -> meno ritardo)
 incremento_feature(0, Anno, Incremento) :-
