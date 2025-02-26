@@ -1,3 +1,12 @@
+"""
+Questo modulo contiene le funzioni per addestrare una rete bayesiana sui dati forniti,.
+
+visualizzare la rete risultante e fare inferenza su una variabile target.
+
+Autore: Christian Corvino
+Data: 26/02/2025
+"""
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +20,15 @@ from pgmpy.factors.discrete import TabularCPD
 np.set_printoptions(suppress=True)
 
 def main(df):
+    """
+    Esegue l'apprendimento bayesiano sul dataset fornito e visualizza i risultati.
+    
+    Args:
+        df (pd.DataFrame): Il DataFrame contenente i dati.
+    
+    Returns:
+        None
+    """
     # Definizione della struttura della rete bayesiana
     model = bayesian_learning(df)
     print("1. Rete bayesiana addestrata con successo.")
@@ -26,6 +44,17 @@ def main(df):
     print("---------------------------------------\n")
 
 def bayesian_learning(df):
+    """
+    Esegue l'apprendimento bayesiano sul dataset fornito.
+    
+    Crea il modello bayesiano, addestra le Conditional Probability Distributions (CPD) e verifica la validità del modello.
+
+    Args:
+        df (pd.DataFrame): Il DataFrame contenente i dati.
+    
+    Returns:
+        BayesianNetwork: Il modello bayesiano addestrato.
+    """
     # Creazione del modello bayesiano
     hc = HillClimbSearch(df)
     best_model = hc.estimate(scoring_method=BicScore(df))
@@ -120,6 +149,17 @@ def bayesian_learning(df):
 
 
 def display_bayesian_graph(model):
+    """
+    Visualizza la rete bayesiana addestrata con layout circolare.
+    
+    Salva l'immagine in documentazione/res/drawable/img_bayesian/bayesian_network.png.
+    
+    Args:
+        model (BayesianNetwork): Il modello bayesiano addestrato.
+    
+    Returns:
+        None
+    """
     print("Visualizzazione della rete bayesiana in layout circolare...")
     graph = nx.DiGraph()
     graph.add_edges_from(model.edges())
@@ -136,6 +176,20 @@ def display_bayesian_graph(model):
     print("Salvato in documentazione/res/drawable/img_bayesian/bayesian_network.png")
 
 def infer_bayesian(model, df, target_var, row_index=0):
+    """
+    Esegue l'inferenza sulla rete bayesiana addestrata.
+
+    Visualizza la distribuzione a posteriori per la variabile target data una riga di esempio.
+    
+    Args:
+        model (BayesianNetwork): Il modello bayesiano addestrato.
+        df (pd.DataFrame): Il DataFrame contenente i dati.
+        target_var (str): La variabile target per l'inferenza.
+        row_index (int): L'indice della riga di esempio nel DataFrame.
+    
+    Returns:
+        TabularCPD: La distribuzione a posteriori per la variabile target.
+    """
     print("3. Inferenza sulla rete bayesiana...")
 
     # Eseguiamo l'inferenza
@@ -158,6 +212,19 @@ def infer_bayesian(model, df, target_var, row_index=0):
     return query_result
 
 def plot_inference_results(query_result, target_var, row_index):
+    """
+    Visualizza la distribuzione a posteriori per la variabile target data una riga di esempio.
+    
+    Salva l'immagine in documentazione/res/drawable/img_bayesian/posterior_distribution.png.
+    
+    Args:
+        query_result (TabularCPD): La distribuzione a posteriori per la variabile target.
+        target_var (str): La variabile target per l'inferenza.
+        row_index (int): L'indice della riga di esempio nel DataFrame.
+    
+    Returns:
+        None
+    """
     print(f"Visualizzazione della distribuzione a posteriori per '{target_var}'...")
     factor = query_result
     states = list(range(factor.cardinality[0]))

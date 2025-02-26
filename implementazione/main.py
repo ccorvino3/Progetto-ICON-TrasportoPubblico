@@ -1,15 +1,32 @@
+"""
+Main del progetto ICON - Ingegneria della Conoscenza.
+
+Crea la cartella per i risultati.
+Definisce le colonne features e target per la predizione.
+
+Questo script esegue le seguenti operazioni:
+1. Caricamento del dataset
+2. Preprocessing continuo del dataset
+3. Predizione della colonna target (incluso addestramento e valutazione dei modelli)
+4. Prolog: predizione della colonna target tramite regole Prolog
+5. Apprendimento bayesiano: analisi della congestione ferroviaria tramite apprendimento bayesiano
+
+Per eseguire il progetto, eseguire questo script.
+
+Per eseguire il progetto:
+- nel mio caso: py implementazione/main.py
+- oppure: python implementazione/main.py
+
+Autore: Christian Corvino
+Data: 26/02/2025
+"""
+
 from utils.dataset import load_dataset
 from utils.preprocessing import preprocess_continuous, preprocess_discrete
 from supervised_learning.supervised_prediction import main as supervised_main
 from KB_prolog.prolog_prediction import main as prolog_main
 from bayesian_learning.bayesian_prediction import main as bayesian_main
 import os
-
-'''
-Per eseguirlo su vscode:
-- nel mio caso: py implementazione/main.py
-- oppure: python implementazione/main.py
-'''
 
 # Creazione della cartella per i risultati
 if not os.path.exists("documentazione/res/drawable"):
@@ -52,6 +69,19 @@ X_bayesian = [
 ]
 
 def main():
+    """
+    Esegui il Main del progetto ICON - Ingegneria della Conoscenza.
+    
+    Esegue le seguenti operazioni:
+    1. Caricamento del dataset
+    2. Preprocessing continuo del dataset
+    3. Predizione della colonna target (incluso addestramento e valutazione dei modelli)
+    4. Prolog: predizione della colonna target tramite regole Prolog
+    5. Apprendimento bayesiano: analisi della congestione ferroviaria tramite apprendimento bayesiano
+    
+    Returns:
+        None
+    """
     # 1. Caricamento del dataset
     df = load_dataset("progettazione/dataset", "Regularities_by_liaisons_Trains_France.csv")
 

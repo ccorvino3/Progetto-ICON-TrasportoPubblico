@@ -1,3 +1,12 @@
+"""
+Predizione dei ritardi dei treni in arrivo utilizzando modelli di Machine Learning.
+
+Include l'addetramento e la valutazione di diversi modelli di regressione e la generazione di grafici per la valutazione.
+
+Autore: Christian Corvino
+Data: 26/02/2025
+"""
+
 import matplotlib
 matplotlib.use('Agg')  # Usa un backend che non dipende da Tkinter
 import matplotlib.pyplot as plt
@@ -18,6 +27,16 @@ np.set_printoptions(suppress=True) # Per evitare che i numeri vengano stampati i
 # - y_pred = gridsearch.best_estimator_.predict(X_test)
 
 def main(X, y):
+    """
+    Funzione principale per la predizione dei ritardi dei treni in arrivo.
+    
+    Args:
+        X (DataFrame): Features per la predizione.
+        y (Series): Target per la predizione.
+    
+    Returns:
+        dict: Random Forest addestrato e valutato da usare per Prolog.
+    """
     print("Predizione in corso...")
 
     # Addestrare i modelli
@@ -49,6 +68,18 @@ def main(X, y):
     return models["RandomForestRegressor"] # Per usarlo per Prolog
 
 def train_models(X, y):
+    """
+    Addestra diversi modelli di regressione e ottimizza gli iperparametri con GridSearchCV.
+    
+    Args:
+        X (DataFrame): Features per la predizione.
+        y (Series): Target per la predizione.
+    
+    Returns:
+        tuple: Una tupla contenente:
+            dict: Modelli addestrati.
+            KFold: K-Fold Cross Validation.
+    """
     models = {
         "LinearRegression": LinearRegression(),
         "SVR": SVR(),
@@ -105,6 +136,20 @@ def train_models(X, y):
     return best_models, kfold
 
 def evaluate_models(models, X, y, kfold):
+    """
+    Valuta i modelli addestrati con K-Fold Cross Validation.
+    
+    Utilizza le metriche di valutazione MAE, MSE e RMSE.
+    
+    Args:
+        models (dict): Modelli addestrati.
+        X (DataFrame): Features per la predizione.
+        y (Series): Target per la predizione.
+        kfold (KFold): K-Fold Cross Validation.
+    
+    Returns:
+        dict: Metriche di valutazione per ogni modello.
+    """
     evaluation_metrics = {}
     print("\nValutazione dei modelli:")
 
@@ -113,7 +158,7 @@ def evaluate_models(models, X, y, kfold):
 
         # Inizializza liste per metriche e predizioni
         fold_mae, fold_mse, fold_rmse = [], [], []
-        y_pred_all = np.zeros(len(y))  # Placeholder per le predizioni finali
+        y_pred_all = np.zeros(len(y)) # Placeholder per le predizioni finali
 
         for train_index, test_index in kfold.split(X):
             X_train, X_test = X.iloc[train_index], X.iloc[test_index]
@@ -140,12 +185,21 @@ def evaluate_models(models, X, y, kfold):
             'MAE': np.mean(fold_mae),
             'MSE': np.mean(fold_mse),
             'RMSE': np.mean(fold_rmse),
-            'Predictions': y_pred_all  # Tutte le predizioni combinate
+            'Predictions': y_pred_all # Tutte le predizioni combinate
         }
 
     return evaluation_metrics
 
 def print_metrics(evaluation_metrics):
+    """
+    Stampa le metriche di valutazione dei modelli in una tabella.
+    
+    Args:
+        evaluation_metrics (dict): Metriche di valutazione per ogni modello.
+    
+    Returns:
+        None
+    """
     # Converte il dizionario in DataFrame e trasforma l'indice in una colonna (modello)
     tb = pd.DataFrame(evaluation_metrics).T[['MAE', 'MSE', 'RMSE']]
     tb = tb.round(2) # Arrotonda a 2 decimali e formatta in stringa per una visualizzazione più chiara
@@ -153,6 +207,21 @@ def print_metrics(evaluation_metrics):
 
 # Plot Learning Curve
 def plot_learning_curve(model, X, y, kfold, model_name):
+    """
+    Genera la curva di apprendimento per un modello specifico.
+    
+    Salva il grafico in documentazione/res/drawable/img_supervised/learning_curve_{model_name}.png.
+    
+    Args:
+        model: Modello addestrato.
+        X (DataFrame): Features per la predizione.
+        y (Series): Target per la predizione.
+        kfold (KFold): K-Fold Cross Validation.
+        model_name (str): Nome del modello.
+    
+    Returns:
+        None
+    """
     train_sizes, train_scores, test_scores = learning_curve(
         model, X, y, cv=kfold, scoring='neg_mean_absolute_error', n_jobs=-1, train_sizes=np.linspace(0.1, 1.0, 10)
     )
@@ -174,6 +243,17 @@ def plot_learning_curve(model, X, y, kfold, model_name):
     print(f"Salvato in documentazione/res/drawable/img_supervised/learning_curve_{model_name}.png")
 
 def plot_models_mae(evaluation_metrics):
+    """
+    Crea un grafico a barre per confrontare le performance dei modelli in base al MAE.
+    
+    Salva il grafico in documentazione/res/drawable/img_supervised/mae_models.png.
+    
+    Args:
+        evaluation_metrics (dict): Metriche di valutazione per ogni modello.
+    
+    Returns:
+        None
+    """
     # Estrai i nomi dei modelli e i corrispondenti MAE
     models = list(evaluation_metrics.keys())
     mae_values = [evaluation_metrics[m]['MAE'] for m in models]

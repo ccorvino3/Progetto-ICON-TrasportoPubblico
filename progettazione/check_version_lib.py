@@ -1,3 +1,10 @@
+"""
+Controlla le versioni delle librerie utilizzate nel progetto.
+
+Autore: Christian Corvino
+Data: 26/02/2025
+"""
+
 import pandas
 print(f"pandas: {pandas.__version__}")
 

@@ -1,3 +1,13 @@
+"""
+Questo script contiene le funzioni per la predizione del ritardo dei treni in Prolog.
+
+Include la conversione dell'albero Random Forest in regole Prolog, la predizione del ritardo per due treni di esempio,
+la ricerca del treno con il ritardo massimo e la verifica se un ritardo proposto è conveniente rispetto a quello predetto.
+
+Autore: Christian Corvino
+Data: 26/02/2025
+"""
+
 from pyswip import Prolog
 from utils.dataset import inverse_transform_column, convert_float_to_time_format as c_time_f
 import numpy as np
@@ -10,6 +20,18 @@ PL_FACTS = "random_forest_facts.pl"
 PL_RULES = "model_delay_rules.pl"
 
 def main(X, random_forest, target, scaler):
+    """
+    Esegue la predizione del ritardo dei treni in Prolog.
+    
+    Args:
+        X (DataFrame): Il DataFrame contenente le features dei treni.
+        random_forest (RandomForestRegressor): Il modello Random Forest addestrato.
+        target (str): Il nome della colonna target.
+        scaler (StandardScaler): Lo scaler utilizzato per normalizzare i dati delle features.
+    
+    Returns:
+        None
+    """
     # Esegui la conversione dell'albero in regole Prolog
     tree = random_forest.estimators_[0]
     convert_tree_in_fact(tree)
@@ -56,6 +78,16 @@ def main(X, random_forest, target, scaler):
     print("---------------------------------------\n")
 
 def convert_tree_in_fact(estimator, filepath=PL_FACTS):
+    """
+    Converti un albero di decisione in regole Prolog e le scrive in un file.
+    
+    Args:
+        estimator (DecisionTreeRegressor): L'albero di decisione addestrato.
+        filepath (str): Il percorso del file in cui scrivere le regole Prolog.
+    
+    Returns:
+        None
+    """
     with open(filepath, 'w') as f:
         # Scrivere l'intestazione del file Prolog
         f.write("% Predizione dell'albero Random Forest\n")
@@ -84,6 +116,16 @@ def convert_tree_in_fact(estimator, filepath=PL_FACTS):
     print(f"File Prolog generato: {filepath}")
 
 def query_predicted_delay(prolog, features):
+    """
+    Interroga Prolog per predire il ritardo di un treno.
+    
+    Args:
+        prolog (Prolog): L'istanza di Prolog.
+        features (list): La lista di features del treno.
+    
+    Returns:
+        float: Il ritardo predetto.
+    """
     # Converte la lista Python in una lista Prolog
     features_str = '[' + ','.join(str(x) for x in features) + ']'
     query_str = f"predire_ritardo({features_str}, Ritardo)."
@@ -94,7 +136,19 @@ def query_predicted_delay(prolog, features):
     else:
         return None
 
-def query_max_delay(prolog, trains):    
+def query_max_delay(prolog, trains):
+    """
+    Interroga Prolog per trovare il treno con il ritardo massimo.
+    
+    Args:
+        prolog (Prolog): L'istanza di Prolog.
+        trains (list): La lista di treni.
+    
+    Returns:
+        tuple: Una tupla contenente:
+            - str: Il treno con il ritardo massimo.
+            - float: Il ritardo massimo.
+    """
     # Costruisce la rappresentazione della lista Prolog dei treni
     trains_str = '[' + ','.join('[' + ','.join(str(x) for x in train) + ']' for train in trains) + ']'
     query_str = f"treno_piu_in_ritardo({trains_str}, Treno, Ritardo)."
@@ -108,6 +162,14 @@ def query_max_delay(prolog, trains):
 def query_best_delay(prolog, features, proposed_delay=20.0):
     """
     Interroga Prolog per verificare se il ritardo proposto è più conveniente rispetto a quello predetto.
+    
+    Args:
+        prolog (Prolog): L'istanza di Prolog.
+        features (list): La lista di features del treno.
+        proposed_delay (float): Il ritardo proposto.
+    
+    Returns:
+        bool: True se il ritardo proposto è conveniente, False altrimenti.
     """
     # Converte la lista Python in una lista Prolog
     features_str = '[' + ','.join(str(x) for x in features) + ']'
