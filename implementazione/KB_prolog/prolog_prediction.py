@@ -16,8 +16,9 @@ import numpy as np
 np.set_printoptions(suppress=True)
 
 # File prolog per forza presenti nella working directory se no la funzione consult dà errore di path
-PL_FACTS = "random_forest_facts.pl"
-PL_RULES = "model_delay_rules.pl"
+PL_FACTS_TREE = "random_forest_facts.pl"
+PL_RULES_TREE = "model_delay_rules.pl"
+PL_RULES = "trains_delay_rules.pl"
 
 def main(X, random_forest, target, scaler):
     """
@@ -32,28 +33,121 @@ def main(X, random_forest, target, scaler):
     Returns:
         None
     """
+    print(list(X.columns))
     # Esegui la conversione dell'albero in regole Prolog
     tree = random_forest.estimators_[0]
     convert_tree_in_fact(tree)
 
     # Init Prolog e i due treni di esempio
     prolog = Prolog()
-    prolog.consult(PL_FACTS)
+    from_prolog(prolog, X, target, scaler)
+    from_tree(prolog, X, tree, target, scaler)
+
+    print("Predizione in Prolog e KB completata.")
+    print("---------------------------------------\n")
+
+def from_prolog(prolog, X, target, scaler):
+    """
+    Esegue la predizione del ritardo dei treni in Prolog.
+    
+    - Predice il ritardo per dei treni di esempio.
+    
+    - Individua il treno con il ritardo massimo.
+    
+    - Verifica se un ritardo proposto è conveniente rispetto a quello predetto.
+    
+    Args:
+        prolog (Prolog): L'istanza di Prolog.
+        X (DataFrame): Il DataFrame contenente le features dei treni.
+        target (str): Il nome della colonna target.
+        scaler (StandardScaler): Lo scaler utilizzato per normalizzare i dati delle features.
+    
+    Returns:
+        None
+    """
+    print(f"Loading {PL_RULES}...")
     prolog.consult(PL_RULES)
+    
+    train3 = list(X.iloc[2].values.astype(float))
+    train4 = list(X.iloc[3].values.astype(float))
+    train5 = list(X.iloc[4].values.astype(float))
+
+    # Ripristina i valori originali delle righe di esempio
+    X_3 = [inverse_transform_column(val, scaler, col) for val, col in zip(X.iloc[2].values, X.columns)]
+    X_4 = [inverse_transform_column(val, scaler, col) for val, col in zip(X.iloc[3].values, X.columns)]
+    X_5 = [inverse_transform_column(val, scaler, col) for val, col in zip(X.iloc[4].values, X.columns)]
+    print(f"Date le features dei treni di esempio:\n{X_3}\n{X_4}\n{X_5}\n")
+    # Predici il ritardo per i treni di esempio
+    delay3 = query_predicted_delay(prolog, train3)
+    delay4 = query_predicted_delay(prolog, train4)
+    delay5 = query_predicted_delay(prolog, train5)
+    delay3_denormalized = inverse_transform_column(delay3, scaler, target)
+    delay4_denormalized = inverse_transform_column(delay4, scaler, target)
+    delay5_denormalized = inverse_transform_column(delay5, scaler, target)
+    print(f"Prolog prediction:\n" +
+          f"df[2] -> {c_time_f(delay3_denormalized)}\n" +
+          f"df[3] -> {c_time_f(delay4_denormalized)}\n" +
+          f"df[4] -> {c_time_f(delay5_denormalized)}\n"
+    )
+
+    # Query per individuare il treno con il ritardo massimo
+    _, best_delay = query_max_delay(prolog, [train3, train4, train5])
+    best_delay_denormalized = inverse_transform_column(best_delay, scaler, target)
+    print(f"Treno con il ritardo massimo {c_time_f(best_delay_denormalized)}\n")
+
+    # Query per verificare se un ritardo proposto è conveniente rispetto a quello predetto
+    proposed_delay = 20 # Un valore ipotetico per il ritardo proposto
+    predetto, is_convenient = query_best_delay(prolog, train3, proposed_delay)
+    predetto_denormalized = c_time_f(inverse_transform_column(predetto, scaler, target))
+    if is_convenient:
+        print(f"Il ritardo proposto {proposed_delay} è più conveniente di quello predetto ({predetto_denormalized}).\n")
+    else:
+        print(f"Il ritardo proposto {proposed_delay} NON è più conveniente di quello predetto ({predetto_denormalized}).\n")
+
+    print(f"Unloading {PL_RULES}...\n")
+    list(prolog.query(f"unload_file('{PL_RULES}')."))
+
+def from_tree(prolog, X, tree, target, scaler):
+    """
+    Esegue la predizione del ritardo dei treni in Prolog considerando l'albero di decisione.
+    
+    - Predice il ritardo per dei treni di esempio.
+    
+    - Individua il treno con il ritardo massimo.
+    
+    - Verifica se un ritardo proposto è conveniente rispetto a quello predetto.
+    
+    Args:
+        prolog (Prolog): L'istanza di Prolog.
+        X (DataFrame): Il DataFrame contenente le features dei treni.
+        tree (DecisionTreeRegressor): L'albero di decisione addestrato.
+        target (str): Il nome della colonna target.
+        scaler (StandardScaler): Lo scaler utilizzato per normalizzare i dati delle features.
+    
+    Returns:
+        None
+    """
+    print(f"Loading {PL_FACTS_TREE} and {PL_RULES_TREE}...")
+    prolog.consult(PL_FACTS_TREE)
+    prolog.consult(PL_RULES_TREE)
+
     train1 = list(X.iloc[0].values.astype(float))
     train2 = list(X.iloc[1].values.astype(float))
 
     # Ripristina i valori originali delle righe di esempio
     X_0 = [inverse_transform_column(val, scaler, col) for val, col in zip(X.iloc[0].values, X.columns)]
     X_1 = [inverse_transform_column(val, scaler, col) for val, col in zip(X.iloc[1].values, X.columns)]
-    print(f"Date le features dei due treni di esempio:\n{X_0}\n{X_1}\n")
-    # Predici il ritardo per i due treni di esempio
+    print(f"Date le features dei treni di esempio:\n{X_0}\n{X_1}\n")
+    # Predici il ritardo per i treni di esempio
     # Prima in Prolog
     delay1 = query_predicted_delay(prolog, train1)
     delay2 = query_predicted_delay(prolog, train2)
     delay1_denormalized = inverse_transform_column(delay1, scaler, target)
     delay2_denormalized = inverse_transform_column(delay2, scaler, target)
-    print(f"Prolog prediction:\ndf[0] -> {c_time_f(delay1_denormalized)}\ndf[1] -> {c_time_f(delay2_denormalized)}\n")
+    print(f"Prolog prediction:\n" +
+          f"df[0] -> {c_time_f(delay1_denormalized)}\n" +
+          f"df[1] -> {c_time_f(delay2_denormalized)}\n"
+    )
     # Poi in Scikit
     dtree_pred_1 = tree.predict([X.iloc[0].values])
     dtree_pred_2 = tree.predict([X.iloc[1].values])
@@ -68,16 +162,18 @@ def main(X, random_forest, target, scaler):
 
     # Query per verificare se un ritardo proposto è conveniente rispetto a quello predetto
     proposed_delay = 20.0  # Un valore ipotetico per il ritardo proposto
-    is_convenient = query_best_delay(prolog, train1, proposed_delay)
+    predetto, is_convenient = query_best_delay(prolog, train1, proposed_delay)
+    predetto_denormalized = c_time_f(inverse_transform_column(predetto, scaler, target))
     if is_convenient:
-        print(f"Il ritardo proposto {proposed_delay} è più conveniente di quello predetto.\n")
+        print(f"Il ritardo proposto {proposed_delay} è più conveniente di quello predetto ({predetto_denormalized}).\n")
     else:
-        print(f"Il ritardo proposto {proposed_delay} NON è più conveniente di quello predetto.\n")
+        print(f"Il ritardo proposto {proposed_delay} NON è più conveniente di quello predetto ({predetto_denormalized}).\n")
 
-    print("Predizione in Prolog e KB completata.")
-    print("---------------------------------------\n")
+    print(f"Unloading {PL_FACTS_TREE} and {PL_RULES_TREE}...\n")
+    list(prolog.query(f"unload_file('{PL_FACTS_TREE}')."))
+    list(prolog.query(f"unload_file('{PL_RULES_TREE}')."))
 
-def convert_tree_in_fact(estimator, filepath=PL_FACTS):
+def convert_tree_in_fact(estimator, filepath=PL_FACTS_TREE):
     """
     Converti un albero di decisione in regole Prolog e le scrive in un file.
     
@@ -169,18 +265,22 @@ def query_best_delay(prolog, features, proposed_delay=20.0):
         proposed_delay (float): Il ritardo proposto.
     
     Returns:
-        bool: True se il ritardo proposto è conveniente, False altrimenti.
+        tuple: Una tupla contenente:
+            - str: Il ritardo predetto.
+            - bool: True se il ritardo proposto è conveniente, False altrimenti.
     """
     # Converte la lista Python in una lista Prolog
     features_str = '[' + ','.join(str(x) for x in features) + ']'
     
     # Formatta la query per Prolog
-    query_str = f"ritardo_conveniente({features_str}, {proposed_delay})."
+    query_str = f"ritardo_conveniente({features_str}, {proposed_delay}, RitardoPredetto, Conveniente)."
     
     # Esegui la query
     result = list(prolog.query(query_str))
-    
-    return bool(result)  # Se la lista non è vuota, il ritardo proposto è conveniente
+    if result:
+        return result[0]['RitardoPredetto'], result[0]['Conveniente']
+    else:
+        return None, None
 
 # if __name__ == "__main__":
 #     main()

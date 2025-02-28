@@ -8,16 +8,19 @@ treno_piu_in_ritardo([Features|AltriTreni], Treno, Ritardo) :-
         Treno = TempTrain, Ritardo = TempDelay
     ).
 
-% Passo base: se c è un solo treno, restituisci le sue caratteristiche e il ritardo predetto.
+% Passo base: se c e' un solo treno, restituisci le sue caratteristiche e il ritardo predetto.
 treno_piu_in_ritardo([Features], Features, Ritardo) :-
     predire_ritardo(Features, Ritardo).
 
 % treno_piu_in_ritardo([], [], 0). Dava un errore quindi ho cambiato il passo base con quello che sta sopra
 
-% Predizione del ritardo più conveniente
-ritardo_conveniente(Features, RitardoProposto) :-
+% Predizione del ritardo piu' conveniente
+ritardo_conveniente(Features, RitardoProposto, RitardoPredetto, Conveniente) :-
     predire_ritardo(Features, RitardoPredetto),
-    RitardoProposto < RitardoPredetto.
+    (RitardoProposto < RitardoPredetto ->
+        Conveniente = true
+    ;
+        Conveniente = false).
 
 % Predizione del ritardo
 predire_ritardo(Features, Ritardo) :-
