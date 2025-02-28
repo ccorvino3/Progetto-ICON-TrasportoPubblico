@@ -9,7 +9,7 @@ Data: 26/02/2025
 """
 
 from pyswip import Prolog
-from utils.dataset import inverse_transform_column, convert_float_to_time_format as c_time_f
+from utils.dataset import inverse_transform_column, convert_float_to_time_format as c_time_f, normalize_value
 import numpy as np
 
 # Per evitare che i numeri siano stampati in notazione scientifica
@@ -33,7 +33,6 @@ def main(X, random_forest, target, scaler):
     Returns:
         None
     """
-    print(list(X.columns))
     # Esegui la conversione dell'albero in regole Prolog
     tree = random_forest.estimators_[0]
     convert_tree_in_fact(tree)
@@ -81,23 +80,20 @@ def from_prolog(prolog, X, target, scaler):
     delay3 = query_predicted_delay(prolog, train3)
     delay4 = query_predicted_delay(prolog, train4)
     delay5 = query_predicted_delay(prolog, train5)
-    delay3_denormalized = inverse_transform_column(delay3, scaler, target)
-    delay4_denormalized = inverse_transform_column(delay4, scaler, target)
-    delay5_denormalized = inverse_transform_column(delay5, scaler, target)
     print(f"Prolog prediction:\n" +
-          f"df[2] -> {c_time_f(delay3_denormalized)}\n" +
-          f"df[3] -> {c_time_f(delay4_denormalized)}\n" +
-          f"df[4] -> {c_time_f(delay5_denormalized)}\n"
+          f"df[2] -> {c_time_f(inverse_transform_column(delay3, scaler, target))}\n" +
+          f"df[3] -> {c_time_f(inverse_transform_column(delay4, scaler, target))}\n" +
+          f"df[4] -> {c_time_f(inverse_transform_column(delay5, scaler, target))}\n"
     )
 
     # Query per individuare il treno con il ritardo massimo
     _, best_delay = query_max_delay(prolog, [train3, train4, train5])
-    best_delay_denormalized = inverse_transform_column(best_delay, scaler, target)
-    print(f"Treno con il ritardo massimo {c_time_f(best_delay_denormalized)}\n")
+    print(f"Treno con il ritardo massimo {c_time_f(inverse_transform_column(best_delay, scaler, target))}\n")
 
     # Query per verificare se un ritardo proposto è conveniente rispetto a quello predetto
     proposed_delay = 20 # Un valore ipotetico per il ritardo proposto
-    predetto, is_convenient = query_best_delay(prolog, train3, proposed_delay)
+    proposed_delay_normalized = normalize_value(proposed_delay, scaler, target)
+    predetto, is_convenient = query_best_delay(prolog, train3, proposed_delay_normalized)
     predetto_denormalized = c_time_f(inverse_transform_column(predetto, scaler, target))
     if is_convenient:
         print(f"Il ritardo proposto {proposed_delay} è più conveniente di quello predetto ({predetto_denormalized}).\n")
@@ -142,27 +138,25 @@ def from_tree(prolog, X, tree, target, scaler):
     # Prima in Prolog
     delay1 = query_predicted_delay(prolog, train1)
     delay2 = query_predicted_delay(prolog, train2)
-    delay1_denormalized = inverse_transform_column(delay1, scaler, target)
-    delay2_denormalized = inverse_transform_column(delay2, scaler, target)
     print(f"Prolog prediction:\n" +
-          f"df[0] -> {c_time_f(delay1_denormalized)}\n" +
-          f"df[1] -> {c_time_f(delay2_denormalized)}\n"
+          f"df[0] -> {c_time_f(inverse_transform_column(delay1, scaler, target))}\n" +
+          f"df[1] -> {c_time_f(inverse_transform_column(delay2, scaler, target))}\n"
     )
     # Poi in Scikit
     dtree_pred_1 = tree.predict([X.iloc[0].values])
     dtree_pred_2 = tree.predict([X.iloc[1].values])
-    dtree_pred_1_denormalized = inverse_transform_column(dtree_pred_1, scaler, target)
-    dtree_pred_2_denormalized = inverse_transform_column(dtree_pred_2, scaler, target)
-    print(f"Scikit prediction:\ndf[0] -> {c_time_f(dtree_pred_1_denormalized)}\ndf[1] -> {c_time_f(dtree_pred_2_denormalized)}\n")
+    print(f"Scikit prediction:\n" +
+          f"df[0] -> {c_time_f(inverse_transform_column(dtree_pred_1, scaler, target))}\n" +
+          f"df[1] -> {c_time_f(inverse_transform_column(dtree_pred_2, scaler, target))}\n"
+    )
 
     # Query per individuare il treno con il ritardo massimo
     _, best_delay = query_max_delay(prolog, [train1, train2])
-    best_delay_denormalized = inverse_transform_column(best_delay, scaler, target)
-    print(f"Treno con il ritardo massimo {c_time_f(best_delay_denormalized)}\n")
+    print(f"Treno con il ritardo massimo {c_time_f(inverse_transform_column(best_delay, scaler, target))}\n")
 
     # Query per verificare se un ritardo proposto è conveniente rispetto a quello predetto
-    proposed_delay = 20.0  # Un valore ipotetico per il ritardo proposto
-    predetto, is_convenient = query_best_delay(prolog, train1, proposed_delay)
+    proposed_delay = 20  # Un valore ipotetico per il ritardo proposto
+    predetto, is_convenient = query_best_delay(prolog, train1, normalize_value(proposed_delay, scaler, target))
     predetto_denormalized = c_time_f(inverse_transform_column(predetto, scaler, target))
     if is_convenient:
         print(f"Il ritardo proposto {proposed_delay} è più conveniente di quello predetto ({predetto_denormalized}).\n")
@@ -278,7 +272,11 @@ def query_best_delay(prolog, features, proposed_delay=20.0):
     # Esegui la query
     result = list(prolog.query(query_str))
     if result:
-        return result[0]['RitardoPredetto'], result[0]['Conveniente']
+        ritardo_predetto = result[0]['RitardoPredetto']
+        conveniente = result[0]['Conveniente']
+        if isinstance(conveniente, str):
+            conveniente = (conveniente.lower() == "true")
+        return ritardo_predetto, conveniente
     else:
         return None, None
 

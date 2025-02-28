@@ -248,3 +248,20 @@ def inverse_transform_column(scaled_value, scaler, column_name):
     original_values = scaled_value * scaler.scale_[col_index] + scaler.mean_[col_index]
     
     return original_values
+
+def normalize_value(value, scaler, column_name):
+    """
+    Normalizza un valore singolo di una colonna specifica.
+    
+    Args:
+        value (float): Valore da normalizzare.
+        scaler (StandardScaler): Lo scaler adattato ai dati.
+        column_name (str): Nome della colonna da normalizzare.
+    
+    Returns:
+        float: Valore normalizzato.
+    """
+    if column_name not in scaler.feature_names_in_:
+        return value
+    col_index = list(scaler.feature_names_in_).index(column_name)
+    return (value - scaler.mean_[col_index]) / scaler.scale_[col_index]
