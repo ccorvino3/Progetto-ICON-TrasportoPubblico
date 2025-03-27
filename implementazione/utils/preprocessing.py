@@ -54,7 +54,7 @@ def preprocess_continuous(df, X, y):
     scaler = StandardScaler()
     df_contin[float_columns] = scaler.fit_transform(df_contin[float_columns])
 
-    print("Preprocessing completato.")
+    print("Preprocessing dati continui completato.")
     export_dataset(df_contin, "df_preprocessed_continuous.csv", "progettazione/dataset")
     print("---------------------------------------\n")
 
@@ -120,7 +120,7 @@ def preprocess_discrete(df, columns, bins=4):
         if pd.api.types.is_numeric_dtype(df_disc[col]) and df_disc[col].nunique() > bins:
             df_disc[col] = pd.qcut(df_disc[col], q=bins, labels=False, duplicates='drop')
 
-    print("Preprocessing completato.")
+    print("Preprocessing dati discreti completato.")
     export_dataset(df_disc, "df_preprocessed_discrete.csv", "progettazione/dataset")
     print("---------------------------------------\n")
 

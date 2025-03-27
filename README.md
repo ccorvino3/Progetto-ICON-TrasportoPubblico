@@ -31,14 +31,8 @@ pip install -r progettazione\requirements.txt
     python progettazione\check_version_lib.py
     ```
 
-2. Spostarsi nella cartella ```implementazione```:
+2. Lanciare il file ```main.py```:
 
 ```bash
-cd implementazione
-```
-
-3. Lanciare il file ```main.py```:
-
-```bash
-python main.py
+python implementazione/main.py
 ```

@@ -12,7 +12,7 @@ matplotlib.use('Agg')  # Usa un backend che non dipende da Tkinter
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import KFold, learning_curve, GridSearchCV
+from sklearn.model_selection import RepeatedKFold, learning_curve, GridSearchCV
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
@@ -114,7 +114,7 @@ def train_models(X, y):
     }
 
     best_models = {}
-    kfold = KFold(n_splits=5, shuffle=True, random_state=42)
+    kfold = RepeatedKFold(n_splits=5, n_repeats=3, random_state=42)
 
     for model_name, model in models.items():
         print(f"Addestramento del modello {model_name}...")
